@@ -1,0 +1,21 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.buildlog/
+.history
+# Flutter build artifacts
+build/
+.dart_tool/
+
+
+
+# Flutter/Dart/Pub related
+**/doc/api/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub/
+
+app.*.symbols
