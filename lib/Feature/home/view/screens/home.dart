@@ -5,14 +5,9 @@ import 'package:bs/Feature/home/cubit/home_cubit.dart';
 import 'package:bs/Feature/home/cubit/home_state.dart';
 import 'package:bs/Feature/home/view/widgets/schedule_card.dart';
 
-class Home extends StatefulWidget {
+class Home extends StatelessWidget {
   const Home({super.key});
 
-  @override
-  State<Home> createState() => _HomeState();
-}
-
-class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<HomeCubit, HomeState>(
@@ -20,22 +15,22 @@ class _HomeState extends State<Home> {
         if (state.status == HomeLoadStatus.loading) {
           return const Center(child: CircularProgressIndicator());
         }
+
         if (state.status == HomeLoadStatus.failure) {
-          return Center(child: Text(state.error ?? 'Something went wrong'));
+          return Center(child: Text(state.error ?? "Something went wrong"));
         }
 
         return ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
+
+            /// SUMMARY CARDS
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  _SummaryCard(
-                    title: 'Total Appointments',
-                    value: state.total.toString(),
-                  ),
+                  _SummaryCard(title: 'Total', value: state.total.toString()),
                   const SizedBox(width: 12),
                   _SummaryCard(
                     title: 'Completed',
@@ -45,33 +40,31 @@ class _HomeState extends State<Home> {
                 ],
               ),
             ),
+
             const SizedBox(height: 12),
+
+            /// PENDING CARD
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _BigPendingCard(pending: state.pending),
+              child: _PendingCard(pending: state.pending),
             ),
+
             const SizedBox(height: 20),
+
+            /// TITLE
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                "Today's Schedule",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black87,
-                ),
+                "Today's Appointments",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
             ),
+
             const SizedBox(height: 8),
 
+            /// LIST / EMPTY VIEW
             if (state.schedules.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 24,
-                ),
-                child: _NoAppointmentView(),
-              )
+              const _NoAppointmentView()
             else
               ...state.schedules.map((e) => ScheduleCard(item: e)),
 
@@ -83,10 +76,14 @@ class _HomeState extends State<Home> {
   }
 }
 
+/// --------------------------------------------------
+/// SUMMARY CARD
+/// --------------------------------------------------
 class _SummaryCard extends StatelessWidget {
   final String title;
   final String value;
   final Color valueColor;
+
   const _SummaryCard({
     required this.title,
     required this.value,
@@ -101,8 +98,8 @@ class _SummaryCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border.all(color: Colors.black12),
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black12),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.03),
@@ -134,9 +131,13 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _BigPendingCard extends StatelessWidget {
+/// --------------------------------------------------
+/// PENDING CARD
+/// --------------------------------------------------
+class _PendingCard extends StatelessWidget {
   final int pending;
-  const _BigPendingCard({required this.pending});
+
+  const _PendingCard({required this.pending});
 
   @override
   Widget build(BuildContext context) {
@@ -145,8 +146,8 @@ class _BigPendingCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: Colors.black12),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -177,10 +178,16 @@ class _BigPendingCard extends StatelessWidget {
   }
 }
 
+/// --------------------------------------------------
+/// EMPTY STATE
+/// --------------------------------------------------
 class _NoAppointmentView extends StatelessWidget {
+  const _NoAppointmentView();
+
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.grey.shade100,

@@ -1,22 +1,20 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../repo/home_repo.dart';
+import 'package:bs/Feature/home/repo/home_repo.dart';
 import 'home_state.dart';
-import '../models/home_schedule_model.dart';
+import 'package:bs/Feature/home/models/home_schedule_model.dart';
 
 class HomeCubit extends Cubit<HomeState> {
   final HomeRepo repo;
-  HomeCubit(this.repo) : super(const HomeState());
+
+  HomeCubit(this.repo) : super(const HomeState()) {
+    load(); // auto load today
+  }
 
   Future<void> load() async {
     emit(state.copyWith(status: HomeLoadStatus.loading));
 
     try {
-      final future = repo.getTodaySchedules();
-
-      final list = await future.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => <HomeScheduleModel>[],
-      );
+      final list = await repo.getTodaySchedules();
 
       final completed = list
           .where((e) => e.status == AppointmentStatus.completed)

@@ -3,7 +3,7 @@ import 'package:bs/Feature/Booking/cubit/calendar_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../models/calendar_schedule_model.dart';
+import 'package:bs/Feature/Booking/models/calendar_schedule_model.dart';
 
 class AppointmentCard extends StatelessWidget {
   final CalendarScheduleModel item;

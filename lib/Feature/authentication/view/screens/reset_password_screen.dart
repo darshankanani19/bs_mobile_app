@@ -8,7 +8,6 @@ import 'package:bs/Core/Util/app_colors.dart';
 import 'package:bs/Core/Util/app_strings.dart';
 import 'package:bs/Core/Util/validation_helper.dart';
 import 'package:bs/Feature/authentication/cubit/authentication_cubit.dart';
-// import 'package:bs/Feature/authentication/model/reset_password_request_model.dart';
 import 'package:bs/Feature/authentication/models/reset_password_request_model.dart';
 import 'package:bs/Feature/authentication/view/widgets/custom_button.dart';
 import 'package:bs/Feature/authentication/view/widgets/custom_text_field.dart';

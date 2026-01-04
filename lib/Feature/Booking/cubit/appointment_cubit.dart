@@ -1,7 +1,7 @@
 import 'package:bs/Feature/Booking/cubit/appointment_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../repo/appointment_repo.dart';
-import '../models/appointment_request_model.dart';
+import 'package:bs/Feature/Booking/repo/appointment_repo.dart';
+import 'package:bs/Feature/Booking/models/appointment_request_model.dart';
 
 class AppointmentCubit extends Cubit<AppointmentState> {
   final AppointmentRepo repo;

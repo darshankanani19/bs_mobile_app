@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/profile_model.dart';
+import 'package:bs/Feature/profile/models/profile_model.dart';
 
 class ProfileService {
   Future<ProfileModel> fetchProfile() async {

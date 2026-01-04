@@ -1,12 +1,10 @@
-// To parse this JSON data, do
-//
-//     final forgotPasswordResponseModel = forgotPasswordResponseModelFromJson(jsonString);
-
 import 'dart:convert';
 
-ForgotPasswordResponseModel forgotPasswordResponseModelFromJson(String str) => ForgotPasswordResponseModel.fromJson(json.decode(str));
+ForgotPasswordResponseModel forgotPasswordResponseModelFromJson(String str) =>
+    ForgotPasswordResponseModel.fromJson(json.decode(str));
 
-String forgotPasswordResponseModelToJson(ForgotPasswordResponseModel data) => json.encode(data.toJson());
+String forgotPasswordResponseModelToJson(ForgotPasswordResponseModel data) =>
+    json.encode(data.toJson());
 
 class ForgotPasswordResponseModel {
   DateTime timestamp;
@@ -21,12 +19,13 @@ class ForgotPasswordResponseModel {
     required this.data,
   });
 
-  factory ForgotPasswordResponseModel.fromJson(Map<String, dynamic> json) => ForgotPasswordResponseModel(
-    timestamp: DateTime.parse(json["timestamp"]),
-    status: json["status"],
-    message: json["message"],
-    data: json["data"],
-  );
+  factory ForgotPasswordResponseModel.fromJson(Map<String, dynamic> json) =>
+      ForgotPasswordResponseModel(
+        timestamp: DateTime.parse(json["timestamp"]),
+        status: json["status"],
+        message: json["message"],
+        data: json["data"],
+      );
 
   Map<String, dynamic> toJson() => {
     "timestamp": timestamp.toIso8601String(),

@@ -1,14 +1,14 @@
 import 'package:intl/intl.dart';
 
-enum AppointmentStatus { pending, completed }
+enum AppointmentStatus { pending, completed, scheduled }
 
 class HomeScheduleModel {
-  final String id;
+  final int id;
   final String name;
   final String service;
   final String timeText;
   final AppointmentStatus status;
-  final DateTime date;
+  final DateTime startTime;
 
   HomeScheduleModel({
     required this.id,
@@ -16,21 +16,31 @@ class HomeScheduleModel {
     required this.service,
     required this.timeText,
     required this.status,
-    required this.date,
+    required this.startTime,
   });
 
   factory HomeScheduleModel.fromJson(Map<String, dynamic> json) {
-    final time = DateTime.parse("2025-01-01 ${json['time']}");
+    final startUtc = DateTime.parse(json['start_time']);
+    final startLocal = startUtc.toLocal(); // ✅ VERY IMPORTANT
 
     return HomeScheduleModel(
-      id: json['id'].toString(),
-      name: "User #${json['user_id']}",
+      id: json['id'],
+      name: json['client_name'] ?? 'Unknown',
       service: json['description'] ?? '',
-      timeText: DateFormat.jm().format(time),
-      status: (json['status'] as String).toLowerCase() == 'completed'
-          ? AppointmentStatus.completed
-          : AppointmentStatus.pending,
-      date: DateTime.parse(json['date']),
+      timeText: DateFormat.jm().format(startLocal),
+      status: _mapStatus(json['status']),
+      startTime: startLocal, // ✅ store local time
     );
+  }
+
+  static AppointmentStatus _mapStatus(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return AppointmentStatus.completed;
+      case 'scheduled':
+        return AppointmentStatus.pending;
+      default:
+        return AppointmentStatus.pending;
+    }
   }
 }

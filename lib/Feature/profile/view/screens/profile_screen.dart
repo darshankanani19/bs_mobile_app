@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../cubit/profile_cubit.dart';
-import '../../cubit/profile_state.dart';
-import '../../repo/profile_repo.dart';
-import '../../services/profile_service.dart';
-import '../widgets/profile_menu_tile.dart';
+import 'package:bs/Feature/profile/cubit/profile_cubit.dart';
+import 'package:bs/Feature/profile/cubit/profile_state.dart';
+import 'package:bs/Feature/profile/repo/profile_repo.dart';
+import 'package:bs/Feature/profile/services/profile_service.dart';
+import 'package:bs/Feature/profile/view/widgets/profile_menu_tile.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});

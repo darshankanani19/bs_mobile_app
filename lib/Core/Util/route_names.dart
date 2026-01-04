@@ -9,5 +9,6 @@ class Routes {
   static const String calendar = '/Booking';
   static const String profile = '/profile';
   static const String createAppointment = '/createAppointment';
+  static const String updateAppointment = 'update-Appointment';
   static const String welcome = '/welcome';
 }

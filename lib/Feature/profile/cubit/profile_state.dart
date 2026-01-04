@@ -1,4 +1,4 @@
-import '../models/profile_model.dart';
+import 'package:bs/Feature/profile/models/profile_model.dart';
 
 enum ProfileLoadStatus {
   initial,

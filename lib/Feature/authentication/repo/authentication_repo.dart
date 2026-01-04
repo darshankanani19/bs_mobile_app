@@ -1,14 +1,10 @@
 import 'dart:async';
 
 import 'package:bs/Feature/authentication/service/authentication_service.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:bs/core/network/api_result.dart';
 import 'package:bs/core/network/api_result_service.dart';
-import 'package:bs/Feature/authentication/models/forgot_password_request_model.dart';
 import 'package:bs/Feature/authentication/models/forgot_password_response_model.dart';
-import 'package:bs/Feature/authentication/models/get_user_model.dart';
 import 'package:bs/Feature/authentication/models/login_data_model.dart';
-import 'package:bs/Feature/authentication/service/authentication_service.dart';
 
 class AuthenticationRepo {
   final authenticationService = AuthenticationService();

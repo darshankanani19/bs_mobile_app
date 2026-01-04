@@ -1,4 +1,4 @@
-import '../models/home_schedule_model.dart';
+import 'package:bs/Feature/home/models/home_schedule_model.dart';
 
 enum HomeLoadStatus { initial, loading, success, failure }
 

@@ -1,5 +1,5 @@
-import '../models/calendar_schedule_model.dart';
-import '../service/calendar_service.dart';
+import 'package:bs/Feature/Booking/models/calendar_schedule_model.dart';
+import 'package:bs/Feature/Booking/service/calendar_service.dart';
 
 class CalendarRepo {
   final CalendarService service;

@@ -1,12 +1,10 @@
-// To parse this JSON data, do
-//
-//     final resetPasswordRequestModel = resetPasswordRequestModelFromJson(jsonString);
-
 import 'dart:convert';
 
-ResetPasswordRequestModel resetPasswordRequestModelFromJson(String str) => ResetPasswordRequestModel.fromJson(json.decode(str));
+ResetPasswordRequestModel resetPasswordRequestModelFromJson(String str) =>
+    ResetPasswordRequestModel.fromJson(json.decode(str));
 
-String resetPasswordRequestModelToJson(ResetPasswordRequestModel data) => json.encode(data.toJson());
+String resetPasswordRequestModelToJson(ResetPasswordRequestModel data) =>
+    json.encode(data.toJson());
 
 class ResetPasswordRequestModel {
   String email;
@@ -19,11 +17,12 @@ class ResetPasswordRequestModel {
     required this.otp,
   });
 
-  factory ResetPasswordRequestModel.fromJson(Map<String, dynamic> json) => ResetPasswordRequestModel(
-    email: json["email"],
-    newPassword: json["new_password"],
-    otp: json["otp"],
-  );
+  factory ResetPasswordRequestModel.fromJson(Map<String, dynamic> json) =>
+      ResetPasswordRequestModel(
+        email: json["email"],
+        newPassword: json["new_password"],
+        otp: json["otp"],
+      );
 
   Map<String, dynamic> toJson() => {
     "email": email,

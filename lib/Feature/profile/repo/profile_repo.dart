@@ -1,5 +1,5 @@
-import '../models/profile_model.dart';
-import '../services/profile_service.dart';
+import 'package:bs/Feature/profile/models/profile_model.dart';
+import 'package:bs/Feature/profile/services/profile_service.dart';
 
 class ProfileRepo {
   final ProfileService service;

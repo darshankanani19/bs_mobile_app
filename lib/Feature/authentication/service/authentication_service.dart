@@ -1,5 +1,4 @@
 import 'package:bs/Core/Util/api_end_points.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:bs/core/network/api_result.dart';
 import 'package:bs/core/network/dio_client.dart';

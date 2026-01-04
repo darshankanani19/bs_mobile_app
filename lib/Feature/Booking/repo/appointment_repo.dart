@@ -1,5 +1,5 @@
-import '../models/appointment_request_model.dart';
-import '../service/appointment_service.dart';
+import 'package:bs/Feature/Booking/models/appointment_request_model.dart';
+import 'package:bs/Feature/Booking/service/appointment_service.dart';
 
 class AppointmentRepo {
   final AppointmentService service;
