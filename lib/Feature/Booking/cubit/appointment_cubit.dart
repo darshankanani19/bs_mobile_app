@@ -1,14 +1,14 @@
-import 'package:bs/Feature/Booking/cubit/appointment_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bs/Feature/Booking/repo/appointment_repo.dart';
-import 'package:bs/Feature/Booking/models/appointment_request_model.dart';
+import '../repo/appointment_repo.dart';
+import '../models/appointment_request_model.dart';
+import 'appointment_state.dart';
 
 class AppointmentCubit extends Cubit<AppointmentState> {
   final AppointmentRepo repo;
 
   AppointmentCubit(this.repo) : super(const AppointmentState());
 
-  void createAppointment(AppointmentRequestModel payload) async {
+  Future<void> createAppointment(AppointmentRequestModel payload) async {
     emit(state.copyWith(status: AppointmentStatus.loading));
     try {
       await repo.createAppointment(payload);
@@ -20,7 +20,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     }
   }
 
-  void updateAppointment({
+  Future<void> updateAppointment({
     required int appointmentId,
     required AppointmentRequestModel payload,
   }) async {
@@ -38,7 +38,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     }
   }
 
-  void deleteAppointment(int appointmentId) async {
+  Future<void> deleteAppointment(int appointmentId) async {
     emit(state.copyWith(status: AppointmentStatus.loading));
     try {
       await repo.deleteAppointment(appointmentId);

@@ -1,7 +1,7 @@
-import 'package:bs/Core/Network/api_result.dart';
-import 'package:bs/Core/Network/dio_client.dart';
 import 'package:bs/Core/Util/api_end_points.dart';
 import 'package:bs/Feature/home/models/home_schedule_model.dart';
+import 'package:bs/core/network/api_result.dart';
+import 'package:bs/core/network/dio_client.dart';
 
 class HomeService {
   Future<List<HomeScheduleModel>> fetchTodaySchedules() async {

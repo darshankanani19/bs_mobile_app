@@ -47,9 +47,20 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
       selectedHour = widget.appointment!.durationMinutes ~/ 60;
       selectedMinute = widget.appointment!.durationMinutes % 60;
 
-      hourController.jumpToItem(selectedHour);
-      minuteController.jumpToItem(selectedMinute);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        hourController.jumpToItem(selectedHour);
+        minuteController.jumpToItem(selectedMinute);
+      });
     }
+  }
+
+  @override
+  void dispose() {
+    clientName.dispose();
+    descriptionController.dispose();
+    hourController.dispose();
+    minuteController.dispose();
+    super.dispose();
   }
 
   @override
@@ -65,7 +76,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
           backgroundColor: mint,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => context.pop(),
+            onPressed: () => context.pop(false),
           ),
           title: Text(
             widget.appointment == null
@@ -80,7 +91,9 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
         body: BlocConsumer<AppointmentCubit, AppointmentState>(
           listener: (context, state) {
             if (state.status == AppointmentStatus.success) {
-              context.pop(true);
+              /// ✅ IMPORTANT
+              /// return true so previous page can reload
+              Navigator.pop(context, true);
             }
           },
           builder: (context, state) {
@@ -175,10 +188,10 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
     if (totalMinutes == 0) return;
 
     final payload = AppointmentRequestModel(
-      client_name: clientName.text,
+      client_name: clientName.text.trim(),
       start_time: selectedDate!.toUtc().toIso8601String(),
       duration_minutes: totalMinutes,
-      description: descriptionController.text,
+      description: descriptionController.text.trim(),
       status: 'scheduled',
     );
 

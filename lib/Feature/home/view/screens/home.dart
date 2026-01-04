@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:bs/Feature/home/cubit/home_cubit.dart';
 import 'package:bs/Feature/home/cubit/home_state.dart';
 import 'package:bs/Feature/home/view/widgets/schedule_card.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -17,15 +16,13 @@ class Home extends StatelessWidget {
         }
 
         if (state.status == HomeLoadStatus.failure) {
-          return Center(child: Text(state.error ?? "Something went wrong"));
+          return Center(child: Text(state.error ?? 'Something went wrong'));
         }
 
         return ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
           children: [
             const SizedBox(height: 12),
 
-            /// SUMMARY CARDS
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -43,7 +40,6 @@ class Home extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            /// PENDING CARD
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: _PendingCard(pending: state.pending),
@@ -51,7 +47,6 @@ class Home extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            /// TITLE
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -62,7 +57,6 @@ class Home extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            /// LIST / EMPTY VIEW
             if (state.schedules.isEmpty)
               const _NoAppointmentView()
             else
@@ -76,9 +70,8 @@ class Home extends StatelessWidget {
   }
 }
 
-/// --------------------------------------------------
-/// SUMMARY CARD
-/// --------------------------------------------------
+/* ---------------- PRIVATE WIDGETS ---------------- */
+
 class _SummaryCard extends StatelessWidget {
   final String title;
   final String value;
@@ -100,13 +93,6 @@ class _SummaryCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.black12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,12 +117,8 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-/// --------------------------------------------------
-/// PENDING CARD
-/// --------------------------------------------------
 class _PendingCard extends StatelessWidget {
   final int pending;
-
   const _PendingCard({required this.pending});
 
   @override
@@ -148,13 +130,6 @@ class _PendingCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,16 +153,13 @@ class _PendingCard extends StatelessWidget {
   }
 }
 
-/// --------------------------------------------------
-/// EMPTY STATE
-/// --------------------------------------------------
 class _NoAppointmentView extends StatelessWidget {
   const _NoAppointmentView();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      margin: const EdgeInsets.all(24),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.grey.shade100,

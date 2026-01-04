@@ -1,18 +1,19 @@
-import 'package:bs/Feature/Booking/cubit/appointment_cubit.dart';
-import 'package:bs/Feature/Booking/models/calendar_schedule_model.dart';
-import 'package:bs/Feature/Booking/repo/appointment_repo.dart';
-import 'package:bs/Feature/Booking/service/appointment_service.dart';
-import 'package:bs/Feature/profile/view/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:bs/core/Util/route_names.dart';
 
+import 'package:bs/Feature/Booking/cubit/appointment_cubit.dart';
+import 'package:bs/Feature/Booking/repo/appointment_repo.dart';
+import 'package:bs/Feature/Booking/service/appointment_service.dart';
+import 'package:bs/Feature/Booking/models/calendar_schedule_model.dart';
+
 import 'package:bs/Feature/home/view/screens/main_shell_screen.dart';
 import 'package:bs/Feature/home/view/screens/home.dart';
 import 'package:bs/Feature/Booking/view/screens/calendar_screen.dart';
 import 'package:bs/Feature/Booking/view/screens/create_appointment_screen.dart';
+import 'package:bs/Feature/profile/view/screens/profile_screen.dart';
 
 import 'package:bs/Feature/authentication/view/screens/welcome_screen.dart';
 import 'package:bs/Feature/authentication/view/screens/login_screen.dart';
@@ -37,17 +38,22 @@ class AppRoutes {
         child: const ResetPasswordScreen(),
       ),
 
-      /// -------- MAIN SHELL (BOTTOM NAV) --------
+      /// -------- MAIN SHELL (GLOBAL CUBITS HERE) --------
       ShellRoute(
         builder: (context, state, child) {
           int index = 0;
-          if (state.uri.path.startsWith(Routes.calendar)) {
-            index = 1;
-          }
-          if (state.uri.path.startsWith(Routes.profile)) {
-            index = 2;
-          }
-          return MainShellScreen(currentIndex: index, child: child);
+          if (state.uri.path.startsWith(Routes.calendar)) index = 1;
+          if (state.uri.path.startsWith(Routes.profile)) index = 2;
+
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) =>
+                    AppointmentCubit(AppointmentRepo(AppointmentService())),
+              ),
+            ],
+            child: MainShellScreen(currentIndex: index, child: child),
+          );
         },
         routes: [
           GoRoute(
@@ -67,30 +73,20 @@ class AppRoutes {
         ],
       ),
 
-      /// -------- STACK PAGE --------
+      /// -------- CREATE APPOINTMENT (NO CUBIT HERE) --------
       GoRoute(
         name: Routes.createAppointment,
         path: '/create-appointment',
-        builder: (context, state) {
-          return BlocProvider(
-            create: (_) =>
-                AppointmentCubit(AppointmentRepo(AppointmentService())),
-            child: const CreateAppointmentScreen(),
-          );
-        },
+        builder: (_, __) => const CreateAppointmentScreen(),
       ),
 
+      /// -------- UPDATE APPOINTMENT --------
       GoRoute(
         name: 'update-Appointment',
         path: '/update-appointment',
         builder: (context, state) {
           final appointment = state.extra as CalendarScheduleModel;
-
-          return BlocProvider(
-            create: (_) =>
-                AppointmentCubit(AppointmentRepo(AppointmentService())),
-            child: CreateAppointmentScreen(appointment: appointment),
-          );
+          return CreateAppointmentScreen(appointment: appointment);
         },
       ),
     ],

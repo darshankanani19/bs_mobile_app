@@ -1,5 +1,4 @@
 import 'package:bs/Core/Util/api_end_points.dart';
-
 import 'package:bs/core/network/dio_client.dart';
 import 'package:bs/core/network/api_result.dart';
 import 'package:bs/Feature/Booking/models/appointment_request_model.dart';
@@ -30,13 +29,15 @@ class AppointmentService {
     throw Exception("Failed to update appointment");
   }
 
-  /// DELETE
+  /// DELETE  ✅ FIXED (204 SUPPORT)
   Future<void> deleteAppointment(int appointmentId) async {
     final response = await DioClient().delete(
       ApiEndPoints.appointmentById(appointmentId),
     );
 
-    if (response is ApiSuccess) return;
+    /// 204 → success → no body
+    if (response == null || response is ApiSuccess) return;
+
     throw Exception("Failed to delete appointment");
   }
 }

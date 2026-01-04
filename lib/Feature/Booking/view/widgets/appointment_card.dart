@@ -1,4 +1,5 @@
 import 'package:bs/Core/Util/route_names.dart';
+import 'package:bs/Feature/Booking/cubit/appointment_cubit.dart';
 import 'package:bs/Feature/Booking/cubit/calendar_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -127,15 +128,16 @@ class AppointmentCard extends StatelessWidget {
             child: const Text("Update", style: TextStyle(color: Colors.blue)),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(dialogContext);
-              _confirmDelete(context);
+
+              await context.read<AppointmentCubit>().deleteAppointment(item.id);
+
+              context.read<CalendarCubit>().refresh();
             },
-            child: const Text(
-              "Delete",
-              style: TextStyle(color: Colors.redAccent),
-            ),
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
           ),
+
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text("Cancel"),
