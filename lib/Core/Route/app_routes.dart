@@ -1,108 +1,111 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:bs/core/Util/route_names.dart';
+import '../Util/route_names.dart';
+import '../helper/storage_helper.dart';
 
-import 'package:bs/Feature/Booking/cubit/appointment_cubit.dart';
-import 'package:bs/Feature/Booking/repo/appointment_repo.dart';
-import 'package:bs/Feature/Booking/service/appointment_service.dart';
-import 'package:bs/Feature/Booking/models/calendar_schedule_model.dart';
+// AUTH
+import '../../Feature/authentication/view/screens/welcome_screen.dart';
+import '../../Feature/authentication/view/screens/login_screen.dart';
+import '../../Feature/authentication/view/screens/signup_screen.dart';
+import '../../Feature/authentication/view/screens/forgot_password_screen.dart';
+import '../../Feature/authentication/view/screens/reset_password_screen.dart';
 
-import 'package:bs/Feature/home/view/screens/main_shell_screen.dart';
-import 'package:bs/Feature/home/view/screens/home.dart';
-import 'package:bs/Feature/Booking/view/screens/calendar_screen.dart';
-import 'package:bs/Feature/Booking/view/screens/create_appointment_screen.dart';
-import 'package:bs/Feature/profile/view/screens/profile_screen.dart';
+// MAIN
+import '../../Feature/home/view/screens/main_shell_screen.dart';
+import '../../Feature/home/view/screens/home.dart';
+import '../../Feature/Booking/view/screens/calendar_screen.dart';
+import '../../Feature/profile/view/screens/profile_screen.dart';
 
-import 'package:bs/Feature/authentication/view/screens/welcome_screen.dart';
-import 'package:bs/Feature/authentication/view/screens/login_screen.dart';
-import 'package:bs/Feature/authentication/view/screens/signup_screen.dart';
-import 'package:bs/Feature/authentication/view/screens/forgot_password_screen.dart';
-import 'package:bs/Feature/authentication/view/screens/reset_password_screen.dart';
+// APPOINTMENTS
+import '../../Feature/Booking/view/screens/create_appointment_screen.dart';
+import '../../Feature/Booking/models/calendar_schedule_model.dart';
 
 class AppRoutes {
-  static final router = GoRouter(
+  static final GoRouter router = GoRouter(
     initialLocation: Routes.welcome,
+
+    // 🔐 AUTH GUARD (ASYNC SAFE)
+    redirect: (context, state) async {
+      final token = await StorageHelper.getAccessToken();
+      final isLoggedIn = token != null && token.isNotEmpty;
+
+      final isAuthRoute =
+          state.uri.path == Routes.welcome ||
+          state.uri.path == Routes.login ||
+          state.uri.path == Routes.signup ||
+          state.uri.path == Routes.forgotPassword ||
+          state.uri.path == Routes.resetPassword;
+
+      // ❌ Not logged in → block app pages
+      if (!isLoggedIn && !isAuthRoute) {
+        return Routes.welcome;
+      }
+
+      // ✅ Logged in → block auth pages
+      if (isLoggedIn && isAuthRoute) {
+        return Routes.home;
+      }
+
+      return null; // allow navigation
+    },
+
     routes: [
-      /// -------- AUTH ROUTES --------
-      _fadeRoute(path: Routes.welcome, child: const WelcomePage()),
-      _fadeRoute(path: Routes.login, child: const LoginScreen()),
-      _fadeRoute(path: Routes.signup, child: const SignUpScreen()),
-      _fadeRoute(
+      // ================= AUTH =================
+      GoRoute(path: Routes.welcome, builder: (_, __) => const WelcomePage()),
+      GoRoute(path: Routes.login, builder: (_, __) => const LoginScreen()),
+      GoRoute(path: Routes.signup, builder: (_, __) => const SignUpScreen()),
+      GoRoute(
         path: Routes.forgotPassword,
-        child: const ForgotPasswordScreen(),
+        builder: (_, __) => const ForgotPasswordScreen(),
       ),
-      _fadeRoute(
+      GoRoute(
         path: Routes.resetPassword,
-        child: const ResetPasswordScreen(),
+        builder: (_, __) => const ResetPasswordScreen(),
       ),
 
-      /// -------- MAIN SHELL (GLOBAL CUBITS HERE) --------
+      // ================= MAIN SHELL =================
       ShellRoute(
         builder: (context, state, child) {
           int index = 0;
           if (state.uri.path.startsWith(Routes.calendar)) index = 1;
           if (state.uri.path.startsWith(Routes.profile)) index = 2;
 
-          return MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) =>
-                    AppointmentCubit(AppointmentRepo(AppointmentService())),
-              ),
-            ],
-            child: MainShellScreen(currentIndex: index, child: child),
-          );
+          return MainShellScreen(currentIndex: index, child: child);
         },
         routes: [
-          GoRoute(
-            path: Routes.home,
-            pageBuilder: (_, __) => const NoTransitionPage(child: Home()),
-          ),
+          // HOME
+          GoRoute(path: Routes.home, builder: (_, __) => const Home()),
+
+          // CALENDAR
           GoRoute(
             path: Routes.calendar,
-            pageBuilder: (_, __) =>
-                const NoTransitionPage(child: CalendarScreen()),
+            builder: (_, __) => const CalendarScreen(),
           ),
+
+          // PROFILE
           GoRoute(
             path: Routes.profile,
-            pageBuilder: (_, __) =>
-                const NoTransitionPage(child: ProfileScreen()),
+            builder: (_, __) => const ProfileScreen(),
+          ),
+
+          // CREATE APPOINTMENT
+          GoRoute(
+            path: Routes.createAppointment,
+            builder: (_, __) => const CreateAppointmentScreen(),
+          ),
+
+          // UPDATE APPOINTMENT
+          GoRoute(
+            path: Routes.updateAppointment,
+            builder: (_, state) {
+              final CalendarScheduleModel item =
+                  state.extra as CalendarScheduleModel;
+              return CreateAppointmentScreen(appointment: item);
+            },
           ),
         ],
       ),
-
-      /// -------- CREATE APPOINTMENT (NO CUBIT HERE) --------
-      GoRoute(
-        name: Routes.createAppointment,
-        path: '/create-appointment',
-        builder: (_, __) => const CreateAppointmentScreen(),
-      ),
-
-      /// -------- UPDATE APPOINTMENT --------
-      GoRoute(
-        name: 'update-Appointment',
-        path: '/update-appointment',
-        builder: (context, state) {
-          final appointment = state.extra as CalendarScheduleModel;
-          return CreateAppointmentScreen(appointment: appointment);
-        },
-      ),
     ],
-  );
-}
-
-GoRoute _fadeRoute({required String path, required Widget child}) {
-  return GoRoute(
-    path: path,
-    pageBuilder: (context, state) => CustomTransitionPage<void>(
-      key: state.pageKey,
-      transitionDuration: const Duration(milliseconds: 300),
-      child: child,
-      transitionsBuilder: (_, animation, __, child) {
-        return FadeTransition(opacity: animation, child: child);
-      },
-    ),
   );
 }

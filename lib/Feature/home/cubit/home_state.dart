@@ -1,9 +1,10 @@
-import 'package:bs/Feature/home/models/home_schedule_model.dart';
+import 'package:equatable/equatable.dart';
+import '../models/home_schedule_model.dart';
 
-enum HomeLoadStatus { initial, loading, success, failure }
+enum HomeStatus { initial, loading, success, failure }
 
-class HomeState {
-  final HomeLoadStatus status;
+class HomeState extends Equatable {
+  final HomeStatus status;
   final List<HomeScheduleModel> schedules;
   final int total;
   final int completed;
@@ -11,7 +12,7 @@ class HomeState {
   final String? error;
 
   const HomeState({
-    this.status = HomeLoadStatus.initial,
+    this.status = HomeStatus.initial,
     this.schedules = const [],
     this.total = 0,
     this.completed = 0,
@@ -20,7 +21,7 @@ class HomeState {
   });
 
   HomeState copyWith({
-    HomeLoadStatus? status,
+    HomeStatus? status,
     List<HomeScheduleModel>? schedules,
     int? total,
     int? completed,
@@ -36,4 +37,8 @@ class HomeState {
       error: error,
     );
   }
+
+  @override
+  List<Object?> get props =>
+      [status, schedules, total, completed, pending, error];
 }

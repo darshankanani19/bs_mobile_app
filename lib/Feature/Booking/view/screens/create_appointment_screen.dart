@@ -1,13 +1,12 @@
-import 'package:bs/Feature/Booking/cubit/appointment_state.dart';
-import 'package:bs/Feature/Booking/models/calendar_schedule_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:formz/formz.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:bs/Feature/Booking/cubit/appointment_cubit.dart';
-import 'package:bs/Feature/Booking/models/appointment_request_model.dart';
-import 'package:bs/Feature/Booking/repo/appointment_repo.dart';
-import 'package:bs/Feature/Booking/service/appointment_service.dart';
+import '../../cubit/appointment_cubit.dart';
+import '../../cubit/calendar_cubit.dart';
+import '../../models/appointment_request_model.dart';
+import '../../models/calendar_schedule_model.dart';
 
 class CreateAppointmentScreen extends StatefulWidget {
   final CalendarScheduleModel? appointment;
@@ -22,25 +21,22 @@ class CreateAppointmentScreen extends StatefulWidget {
 class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final clientName = TextEditingController();
+  final clientNameController = TextEditingController();
   final descriptionController = TextEditingController();
 
   DateTime? selectedDate;
-
   int selectedHour = 0;
-  int selectedMinute = 0;
+  int selectedMinute = 30;
 
-  final FixedExtentScrollController hourController =
-      FixedExtentScrollController();
-  final FixedExtentScrollController minuteController =
-      FixedExtentScrollController();
+  final hourController = FixedExtentScrollController();
+  final minuteController = FixedExtentScrollController();
 
   @override
   void initState() {
     super.initState();
 
     if (widget.appointment != null) {
-      clientName.text = widget.appointment!.clientName;
+      clientNameController.text = widget.appointment!.clientName;
       descriptionController.text = widget.appointment!.description;
       selectedDate = widget.appointment!.startTime;
 
@@ -56,7 +52,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
 
   @override
   void dispose() {
-    clientName.dispose();
+    clientNameController.dispose();
     descriptionController.dispose();
     hourController.dispose();
     minuteController.dispose();
@@ -68,117 +64,104 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
     const mint = Color(0xFFAEC6C1);
     const bg = Color(0xFFF6F8F7);
 
-    return BlocProvider(
-      create: (_) => AppointmentCubit(AppointmentRepo(AppointmentService())),
-      child: Scaffold(
-        backgroundColor: bg,
-        appBar: AppBar(
-          backgroundColor: mint,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => context.pop(false),
-          ),
-          title: Text(
-            widget.appointment == null
-                ? "New Appointment"
-                : "Update Appointment",
-            style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        body: BlocConsumer<AppointmentCubit, AppointmentState>(
-          listener: (context, state) {
-            if (state.status == AppointmentStatus.success) {
-              /// ✅ IMPORTANT
-              /// return true so previous page can reload
-              Navigator.pop(context, true);
-            }
-          },
-          builder: (context, state) {
-            if (state.status == AppointmentStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    return Scaffold(
+      backgroundColor: bg,
+      body: BlocConsumer<AppointmentCubit, AppointmentState>(
+        listener: (context, state) {
+          if (state.createStatus == FormzSubmissionStatus.success ||
+              state.updateStatus == FormzSubmissionStatus.success) {
+            context.read<CalendarCubit>().refresh();
+            Navigator.pop(context, true);
+          }
+        },
+        builder: (context, state) {
+          final isLoading =
+              state.createStatus == FormzSubmissionStatus.inProgress ||
+              state.updateStatus == FormzSubmissionStatus.inProgress;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    _field(
-                      controller: clientName,
-                      label: "Client Name",
-                      hint: "Enter Client Name",
+          if (isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _field(
+                    controller: clientNameController,
+                    label: "Client Name",
+                    hint: "Enter Client Name",
+                  ),
+                  const SizedBox(height: 16),
+
+                  _datePicker(
+                    label: "Select Date",
+                    value: selectedDate,
+                    onTap: () async {
+                      final d = await showDatePicker(
+                        context: context,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime(2030),
+                        initialDate: selectedDate ?? DateTime.now(),
+                      );
+
+                      if (d != null) {
+                        final now = DateTime.now();
+                        setState(() {
+                          selectedDate = DateTime(
+                            d.year,
+                            d.month,
+                            d.day,
+                            now.hour,
+                            now.minute,
+                          );
+                        });
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  _durationPicker(),
+
+                  const SizedBox(height: 16),
+
+                  _field(
+                    controller: descriptionController,
+                    label: "Description",
+                    hint: "Service description",
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: mint,
+                      minimumSize: const Size(double.infinity, 50),
                     ),
-                    const SizedBox(height: 16),
-
-                    _datePicker(
-                      label: "Select Date",
-                      value: selectedDate,
-                      onTap: () async {
-                        final d = await showDatePicker(
-                          context: context,
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime(2030),
-                          initialDate: selectedDate ?? DateTime.now(),
-                        );
-
-                        if (d != null) {
-                          final now = DateTime.now();
-                          setState(() {
-                            selectedDate = DateTime(
-                              d.year,
-                              d.month,
-                              d.day,
-                              now.hour,
-                              now.minute,
-                            );
-                          });
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _durationPicker(),
-
-                    const SizedBox(height: 16),
-
-                    _field(
-                      controller: descriptionController,
-                      label: "Description",
-                      hint: "Service description",
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: mint,
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
-                      onPressed: _submit,
-                      child: Text(
-                        widget.appointment == null
-                            ? "Book Appointment"
-                            : "Update Appointment",
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    onPressed: _submit,
+                    child: Text(
+                      widget.appointment == null
+                          ? "Book Appointment"
+                          : "Update Appointment",
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
+
+  // ===================== SUBMIT =====================
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
@@ -188,7 +171,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
     if (totalMinutes == 0) return;
 
     final payload = AppointmentRequestModel(
-      client_name: clientName.text.trim(),
+      client_name: clientNameController.text.trim(),
       start_time: selectedDate!.toUtc().toIso8601String(),
       duration_minutes: totalMinutes,
       description: descriptionController.text.trim(),
@@ -198,14 +181,13 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
     final cubit = context.read<AppointmentCubit>();
 
     if (widget.appointment == null) {
-      cubit.createAppointment(payload);
+      cubit.create(payload);
     } else {
-      cubit.updateAppointment(
-        appointmentId: widget.appointment!.id,
-        payload: payload,
-      );
+      cubit.update(widget.appointment!.id, payload);
     }
   }
+
+  // ===================== UI WIDGETS =====================
 
   Widget _field({
     required TextEditingController controller,

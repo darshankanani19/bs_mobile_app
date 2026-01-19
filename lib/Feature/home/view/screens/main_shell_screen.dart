@@ -24,7 +24,7 @@ class MainShellScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<HomeCubit>(
-      create: (_) => HomeCubit(HomeRepo(HomeService()))..load(),
+      create: (_) => HomeCubit(HomeRepo())..load(),
       child: Scaffold(
         backgroundColor: const Color(0xFFF6F8F7),
 

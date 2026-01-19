@@ -33,7 +33,9 @@ class ApiInterceptors {
         debugPrint('➡️ Request Path: ${options.path}');
 
         Map<String, dynamic> headers;
-
+        final isIgnored = ignoreAuthTokenEndpoints.any(
+          (e) => options.path.contains(e),
+        );
         // 1. Use reset token for reset password endpoint
         if (options.path == resetPasswordEndpoint &&
             resetToken != null &&
@@ -42,7 +44,7 @@ class ApiInterceptors {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $resetToken',
           };
-        } else if (ignoreAuthTokenEndpoints.contains(options.path)) {
+        } else if (isIgnored) {
           headers = {'Content-Type': 'application/json'};
         } else {
           headers = await ApiHeaders.getHeaders();
@@ -72,7 +74,7 @@ class ApiInterceptors {
           response.data = ApiResult.success(data: data, status: 200);
         } else {
           print("⚠️ in ee option: non-200 response");
-          handleInvalidToken(response);
+          // handleInvalidToken(response);
 
           final errorMsg =
               data['message'] ?? data['detail'] ?? 'Unknown error occurred';
@@ -146,11 +148,11 @@ class ApiInterceptors {
       final result = response.data;
 
       if (response.statusCode == 200 && result["data"] != null) {
-        // final newAccessToken = result["data"]["access_token"];
-        // final newRefreshToken = result["data"]["refresh_token"];
-        //
-        // await StorageHelper.saveAccessToken(newAccessToken);
-        // await StorageHelper.saveRefreshToken(newRefreshToken);
+        final newAccessToken = result["data"]["access_token"];
+        final newRefreshToken = result["data"]["refresh_token"];
+
+        await StorageHelper.saveAccessToken(newAccessToken);
+        await StorageHelper.saveRefreshToken(newRefreshToken);
         return true;
       }
     } catch (e) {
@@ -159,35 +161,35 @@ class ApiInterceptors {
     return false;
   }
 
-  void handleInvalidToken(Response response) async {
-    if (response?.statusCode == 401) {
-      print("Hey123");
-      final success = await _refreshAccessToken();
-
-      if (success) {
-        final newToken = await StorageHelper.getAccessToken();
-
-        final opts = Options(
-          method: response.requestOptions.method,
-          headers: {
-            ...response.requestOptions.headers,
-            'Authorization': 'Bearer $newToken',
-          },
-        );
-
-        final cloneReq = await _dio!.request(
-          response.requestOptions.path,
-          data: response.requestOptions.data,
-          queryParameters: response.requestOptions.queryParameters,
-          options: opts,
-        );
-      } else {
-        await StorageHelper.logout(); // Clear data on refresh failure
-        response?.data = ApiResult.failure(
-          error: 'Session expired. Please login again.',
-          status: 401,
-        );
-      }
-    }
-  }
+  // void handleInvalidToken(Response response) async {
+  //   if (response.statusCode == 401) {
+  //     print("Hey123");
+  //     final success = await _refreshAccessToken();
+  //
+  //     if (success) {
+  //       final newToken = await StorageHelper.getAccessToken();
+  //
+  //       final opts = Options(
+  //         method: response.requestOptions.method,
+  //         headers: {
+  //           ...response.requestOptions.headers,
+  //           'Authorization': 'Bearer $newToken',
+  //         },
+  //       );
+  //
+  //       final cloneReq = await _dio!.request(
+  //         response.requestOptions.path,
+  //         data: response.requestOptions.data,
+  //         queryParameters: response.requestOptions.queryParameters,
+  //         options: opts,
+  //       );
+  //     } else {
+  //       await StorageHelper.logout(); // Clear data on refresh failure
+  //       response.data = ApiResult.failure(
+  //         error: 'Session expired. Please login again.',
+  //         status: 401,
+  //       );
+  //     }
+  //   }
+  // }
 }

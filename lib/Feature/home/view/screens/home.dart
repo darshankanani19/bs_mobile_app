@@ -1,21 +1,33 @@
-import 'package:bs/Feature/home/cubit/home_cubit.dart';
-import 'package:bs/Feature/home/cubit/home_state.dart';
-import 'package:bs/Feature/home/view/widgets/schedule_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class Home extends StatelessWidget {
+import '../../cubit/home_cubit.dart';
+import '../../cubit/home_state.dart';
+import '../widgets/schedule_card.dart';
+
+class Home extends StatefulWidget {
   const Home({super.key});
+
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<HomeCubit>().load(); // 🔥 ALWAYS LOAD TODAY
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<HomeCubit, HomeState>(
       builder: (context, state) {
-        if (state.status == HomeLoadStatus.loading) {
+        if (state.status == HomeStatus.loading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (state.status == HomeLoadStatus.failure) {
+        if (state.status == HomeStatus.failure) {
           return Center(child: Text(state.error ?? 'Something went wrong'));
         }
 
@@ -70,8 +82,6 @@ class Home extends StatelessWidget {
   }
 }
 
-/* ---------------- PRIVATE WIDGETS ---------------- */
-
 class _SummaryCard extends StatelessWidget {
   final String title;
   final String value;
@@ -93,6 +103,13 @@ class _SummaryCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.black12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,6 +136,7 @@ class _SummaryCard extends StatelessWidget {
 
 class _PendingCard extends StatelessWidget {
   final int pending;
+
   const _PendingCard({required this.pending});
 
   @override
@@ -130,6 +148,13 @@ class _PendingCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,7 +169,7 @@ class _PendingCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w800,
-              color: Color(0xFFFFA000),
+              color: Color(0xFFFFA000), // amber/orange
             ),
           ),
         ],
@@ -165,6 +190,13 @@ class _NoAppointmentView extends StatelessWidget {
         color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: const [

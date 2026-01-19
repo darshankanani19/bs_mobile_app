@@ -1,14 +1,17 @@
-/// Use these with `GoRouter` (name & path)
 class Routes {
-  static const String splash = '/';
-  static const String login = '/login';
-  static const String signup = '/signup';
-  static const String forgotPassword = '/forgot-password';
-  static const String resetPassword = '/reset-password';
-  static const String home = '/home';
-  static const String calendar = '/Booking';
-  static const String profile = '/profile';
-  static const String createAppointment = '/createAppointment';
-  static const String updateAppointment = 'update-Appointment';
-  static const String welcome = '/welcome';
+  // AUTH
+  static const welcome = '/';
+  static const login = '/login';
+  static const signup = '/signup';
+  static const forgotPassword = '/forgot-password';
+  static const resetPassword = '/reset-password';
+
+  // MAIN
+  static const home = '/home';
+  static const calendar = '/calendar';
+  static const profile = '/profile';
+
+  // APPOINTMENT
+  static const createAppointment = '/create-appointment';
+  static const updateAppointment = 'update-appointment';
 }

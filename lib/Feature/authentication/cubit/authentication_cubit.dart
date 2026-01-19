@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:bs/Feature/authentication/repo/authentication_repo.dart';
 import 'package:equatable/equatable.dart';
@@ -12,10 +11,6 @@ import 'package:bs/Feature/authentication/models/get_user_model.dart';
 import 'package:bs/Feature/authentication/models/login_data_model.dart';
 import 'package:bs/Feature/authentication/models/reset_password_request_model.dart';
 import 'package:bs/Feature/authentication/models/signup_request_model.dart';
-import 'package:bs/Feature/authentication/repo/authentication_repo.dart';
-// import 'package:mavemate/core/utils/token_helper.dart';
-
-import 'package:shared_preferences/shared_preferences.dart';
 
 part 'authentication_state.dart';
 

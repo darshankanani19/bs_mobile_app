@@ -1,29 +1,54 @@
-import 'package:bs/Feature/Booking/models/appointment_request_model.dart';
-import 'package:bs/Feature/Booking/service/appointment_service.dart';
+import 'package:bs/core/network/api_result.dart';
+import 'package:bs/core/network/api_result_service.dart';
+
+import '../models/appointment_request_model.dart';
+import '../service/appointment_service.dart';
 
 class AppointmentRepo {
-  final AppointmentService service;
+  final service = AppointmentService();
 
-  AppointmentRepo(this.service);
+  Future<RepoResult> createAppointment(AppointmentRequestModel payload) async {
+    try {
+      final ApiResult result = await service.create(payload);
 
-  /// CREATE
-  Future<void> createAppointment(AppointmentRequestModel payload) {
-    return service.createAppointment(payload);
+      if (result is ApiSuccess) {
+        return RepoResult.success(data: result.data);
+      } else {
+        return RepoResult.failure(error: (result as ApiFailure).error);
+      }
+    } catch (e) {
+      return RepoResult.failure(error: e.toString());
+    }
   }
 
-  /// UPDATE
-  Future<void> updateAppointment({
-    required int appointmentId,
-    required AppointmentRequestModel payload,
-  }) {
-    return service.updateAppointment(
-      appointmentId: appointmentId,
-      payload: payload,
-    );
+  Future<RepoResult> updateAppointment(
+    int id,
+    AppointmentRequestModel payload,
+  ) async {
+    try {
+      final ApiResult result = await service.update(id, payload);
+
+      if (result is ApiSuccess) {
+        return RepoResult.success(data: result.data);
+      } else {
+        return RepoResult.failure(error: (result as ApiFailure).error);
+      }
+    } catch (e) {
+      return RepoResult.failure(error: e.toString());
+    }
   }
 
-  /// DELETE
-  Future<void> deleteAppointment(int appointmentId) {
-    return service.deleteAppointment(appointmentId);
+  Future<RepoResult> deleteAppointment(int id) async {
+    try {
+      final ApiResult result = await service.delete(id);
+
+      if (result is ApiSuccess) {
+        return RepoResult.success(data: null);
+      } else {
+        return RepoResult.failure(error: (result as ApiFailure).error);
+      }
+    } catch (e) {
+      return RepoResult.failure(error: e.toString());
+    }
   }
 }

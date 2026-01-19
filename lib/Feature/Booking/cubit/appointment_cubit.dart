@@ -1,52 +1,139 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../repo/appointment_repo.dart';
+import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:formz/formz.dart';
+
 import '../models/appointment_request_model.dart';
-import 'appointment_state.dart';
+import '../repo/appointment_repo.dart';
+import 'package:bs/core/network/api_result_service.dart';
+
+part 'appointment_state.dart';
 
 class AppointmentCubit extends Cubit<AppointmentState> {
-  final AppointmentRepo repo;
+  final AppointmentRepo appointmentRepo;
 
-  AppointmentCubit(this.repo) : super(const AppointmentState());
+  AppointmentCubit({required this.appointmentRepo})
+    : super(const AppointmentState());
 
-  Future<void> createAppointment(AppointmentRequestModel payload) async {
-    emit(state.copyWith(status: AppointmentStatus.loading));
+  /// ================= CREATE =================
+  Future<void> create(AppointmentRequestModel payload) async {
     try {
-      await repo.createAppointment(payload);
-      emit(state.copyWith(status: AppointmentStatus.success));
-    } catch (e) {
       emit(
-        state.copyWith(status: AppointmentStatus.failure, error: e.toString()),
+        state.copyWith(
+          createStatus: FormzSubmissionStatus.inProgress,
+          errorMessage: null,
+        ),
+      );
+
+      debugPrint('📤 Create Appointment Payload: ${payload.toJson()}');
+
+      final RepoResult response = await appointmentRepo.createAppointment(
+        payload,
+      );
+
+      if (response is RepoSuccess) {
+        debugPrint('✅ Create Appointment Success: ${response.data}');
+        emit(state.copyWith(createStatus: FormzSubmissionStatus.success));
+      } else if (response is RepoFailure) {
+        debugPrint('❌ Create Appointment Failed: ${response.error}');
+        emit(
+          state.copyWith(
+            createStatus: FormzSubmissionStatus.failure,
+            errorMessage: response.error,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Create Appointment Exception: $e');
+      emit(
+        state.copyWith(
+          createStatus: FormzSubmissionStatus.failure,
+          errorMessage: e.toString(),
+        ),
       );
     }
   }
 
-  Future<void> updateAppointment({
-    required int appointmentId,
-    required AppointmentRequestModel payload,
-  }) async {
-    emit(state.copyWith(status: AppointmentStatus.loading));
+  /// ================= UPDATE =================
+  Future<void> update(int id, AppointmentRequestModel payload) async {
     try {
-      await repo.updateAppointment(
-        appointmentId: appointmentId,
-        payload: payload,
-      );
-      emit(state.copyWith(status: AppointmentStatus.success));
-    } catch (e) {
       emit(
-        state.copyWith(status: AppointmentStatus.failure, error: e.toString()),
+        state.copyWith(
+          updateStatus: FormzSubmissionStatus.inProgress,
+          errorMessage: null,
+        ),
+      );
+
+      debugPrint(
+        '📤 Update Appointment ID: $id | Payload: ${payload.toJson()}',
+      );
+
+      final RepoResult response = await appointmentRepo.updateAppointment(
+        id,
+        payload,
+      );
+
+      if (response is RepoSuccess) {
+        debugPrint('✅ Update Appointment Success: ${response.data}');
+        emit(state.copyWith(updateStatus: FormzSubmissionStatus.success));
+      } else if (response is RepoFailure) {
+        debugPrint('❌ Update Appointment Failed: ${response.error}');
+        emit(
+          state.copyWith(
+            updateStatus: FormzSubmissionStatus.failure,
+            errorMessage: response.error,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Update Appointment Exception: $e');
+      emit(
+        state.copyWith(
+          updateStatus: FormzSubmissionStatus.failure,
+          errorMessage: e.toString(),
+        ),
       );
     }
   }
 
-  Future<void> deleteAppointment(int appointmentId) async {
-    emit(state.copyWith(status: AppointmentStatus.loading));
+  /// ================= DELETE =================
+  Future<void> delete(int id) async {
     try {
-      await repo.deleteAppointment(appointmentId);
-      emit(state.copyWith(status: AppointmentStatus.success));
-    } catch (e) {
       emit(
-        state.copyWith(status: AppointmentStatus.failure, error: e.toString()),
+        state.copyWith(
+          deleteStatus: FormzSubmissionStatus.inProgress,
+          errorMessage: null,
+        ),
+      );
+
+      debugPrint('🗑 Delete Appointment ID: $id');
+
+      final RepoResult response = await appointmentRepo.deleteAppointment(id);
+
+      if (response is RepoSuccess) {
+        debugPrint('✅ Delete Appointment Success');
+        emit(state.copyWith(deleteStatus: FormzSubmissionStatus.success));
+      } else if (response is RepoFailure) {
+        debugPrint('❌ Delete Appointment Failed: ${response.error}');
+        emit(
+          state.copyWith(
+            deleteStatus: FormzSubmissionStatus.failure,
+            errorMessage: response.error,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Delete Appointment Exception: $e');
+      emit(
+        state.copyWith(
+          deleteStatus: FormzSubmissionStatus.failure,
+          errorMessage: e.toString(),
+        ),
       );
     }
+  }
+
+  void resetState() {
+    emit(const AppointmentState());
   }
 }
