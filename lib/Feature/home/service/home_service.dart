@@ -7,12 +7,7 @@ import '../models/home_schedule_model.dart';
 class HomeService {
   Future<List<HomeScheduleModel>> fetchTodaySchedules() async {
     final response = await DioClient().get(ApiEndPoints.appointments);
-
-    if (response is ApiSuccess) {
-      final List data = response.data;
-      return data.map((e) => HomeScheduleModel.fromJson(e)).toList();
-    }
-
-    throw Exception('Failed to load home schedules');
+    final List data = response.data;
+    return data.map((e) => HomeScheduleModel.fromJson(e)).toList();
   }
 }

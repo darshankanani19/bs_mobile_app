@@ -13,20 +13,8 @@ class AuthenticationService {
   }
 
   Future<ApiResult> login(Map<String, dynamic> payload) async {
-    try {
-      final apiResult = await DioClient().post(
-        ApiEndPoints.login,
-        data: payload,
-      );
-      return apiResult;
-    } catch (e) {
-      // ✅ Print error in console
-      debugPrint('❌ Login error: $e');
-      return ApiResult.failure(
-        error: e.toString(),
-        status: 500,
-      ); // handle gracefully
-    }
+    final response = await DioClient().post(ApiEndPoints.login, data: payload);
+    return ApiResult.success(data: response.data);
   }
 
   Future<ApiResult> forgotPassword(Map<String, dynamic> payload) async {
@@ -41,6 +29,6 @@ class AuthenticationService {
 
   Future<ApiResult> logout() async {
     final response = await DioClient().post(ApiEndPoints.logout);
-    return response;
+    return ApiResult.success(data: response.data);
   }
 }

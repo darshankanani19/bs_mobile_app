@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../cubit/home_cubit.dart';
-import '../../cubit/home_state.dart';
-import '../widgets/schedule_card.dart';
+import 'package:bs/core/network/refresh_state.dart';
+import 'package:bs/Feature/home/cubit/home_cubit.dart';
+import 'package:bs/Feature/home/cubit/home_state.dart';
+import 'package:bs/Feature/home/view/widgets/schedule_card.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -23,12 +24,30 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return BlocBuilder<HomeCubit, HomeState>(
       builder: (context, state) {
+        if (RefreshState.isRefreshing) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
         if (state.status == HomeStatus.loading) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (state.status == HomeStatus.failure) {
-          return Center(child: Text(state.error ?? 'Something went wrong'));
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(state.error ?? 'Something went wrong'),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<HomeCubit>().load(); // retry
+                  },
+                  child: const Text("Retry"),
+                ),
+              ],
+            ),
+          );
         }
 
         return ListView(

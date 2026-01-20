@@ -61,6 +61,8 @@ class StorageHelper {
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_loginDataKey);
+    await prefs.remove(_accessTokenKey);
+    await prefs.remove(_refreshTokenKey);
   }
 
   /// Internal: Clear all stored credentials

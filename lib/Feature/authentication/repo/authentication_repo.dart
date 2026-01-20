@@ -6,6 +6,8 @@ import 'package:bs/core/network/api_result_service.dart';
 import 'package:bs/Feature/authentication/models/forgot_password_response_model.dart';
 import 'package:bs/Feature/authentication/models/login_data_model.dart';
 
+import 'package:bs/Core/helper/storage_helper.dart';
+
 class AuthenticationRepo {
   final authenticationService = AuthenticationService();
   Future<RepoResult> signup({required Map<String, dynamic> payload}) async {
@@ -27,81 +29,27 @@ class AuthenticationRepo {
     required Map<String, dynamic> payload,
   }) async {
     try {
-      final response = await commonApiCall(
-        authenticationService.login(payload),
-      );
+      final response = await authenticationService.login(payload);
 
       if (response is ApiSuccess) {
-        // Response shapes vary between environments/APIs.
-        // Handle common shapes:
-        // 1) Wrapped: { timestamp, status, message, data: { access_token, refresh_token } }
-        // 2) Flat tokens: { access: "...", refresh: "..." }
-        // 3) Flat tokens with different keys: { access_token: "...", refresh_token: "..." }
+        final data = Map<String, dynamic>.from(response.data);
 
-        final Map<String, dynamic> map = Map<String, dynamic>.from(
-          response.data ?? {},
+        // ✅ Extract JWT tokens
+        final access = data['access'];
+        final refresh = data['refresh'];
+
+        // ✅ Save tokens for interceptor
+        await StorageHelper.saveAccessToken(access);
+        await StorageHelper.saveRefreshToken(refresh);
+
+        // Optional: wrap into model if needed
+        final loginResponse = LoginResponse(
+          data: LoginData(accessToken: access, refreshToken: refresh),
         );
 
-        LoginResponse loginResponse;
-
-        if (map.containsKey('data') && map['data'] is Map) {
-          // Preferred wrapped format
-          loginResponse = LoginResponse.fromMap(map);
-        } else if (map.containsKey('access') || map.containsKey('refresh')) {
-          // Flat tokens with keys 'access'/'refresh'
-          final access = map['access']?.toString();
-          final refresh = map['refresh']?.toString();
-          final tokenType =
-              map['token_type']?.toString() ?? map['type']?.toString();
-
-          loginResponse = LoginResponse(
-            timestamp: map['timestamp']?.toString(),
-            status: map['status'] is int ? map['status'] as int : null,
-            message: map['message']?.toString(),
-            data: LoginData(
-              accessToken: access,
-              refreshToken: refresh,
-              tokenType: tokenType,
-            ),
-          );
-        } else if (map.containsKey('access_token') ||
-            map.containsKey('refresh_token')) {
-          // Flat tokens with underscore keys
-          final access = map['access_token']?.toString();
-          final refresh = map['refresh_token']?.toString();
-          final tokenType = map['token_type']?.toString();
-
-          loginResponse = LoginResponse(
-            timestamp: map['timestamp']?.toString(),
-            status: map['status'] is int ? map['status'] as int : null,
-            message: map['message']?.toString(),
-            data: LoginData(
-              accessToken: access,
-              refreshToken: refresh,
-              tokenType: tokenType,
-            ),
-          );
-        } else {
-          // Fallback: try to parse entire response as LoginResponse
-          try {
-            loginResponse = LoginResponse.fromMap(map);
-          } catch (_) {
-            // If parsing failed, return failure
-            return RepoResult.failure(
-              error: 'Unexpected login response format',
-            );
-          }
-        }
-
-        return RepoResult.success(
-          data: loginResponse,
-          successCode: response.status,
-        );
+        return RepoResult.success(data: loginResponse);
       } else {
-        return RepoResult.failure(
-          error: (response as ApiFailure).error,
-          errorCode: response.status,
-        );
+        return RepoResult.failure(error: (response as ApiFailure).error);
       }
     } catch (e) {
       return RepoResult.failure(error: e.toString());

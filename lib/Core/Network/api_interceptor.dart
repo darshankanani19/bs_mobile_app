@@ -3,193 +3,140 @@ import 'package:bs/Core/Util/api_end_points.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:bs/core/helper/storage_helper.dart';
-
 import 'package:bs/core/network/api_result.dart';
-import 'package:bs/core/network/api_header.dart';
-import 'package:shared_preferences/shared_preferences.dart'
-    show SharedPreferences;
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class ApiInterceptors {
-  Dio? _dio;
+  final Dio _dio;
 
-  ApiInterceptors({Dio? dio}) {
-    _dio = dio ?? Dio(); // Used for token refresh
-  }
+  // These variables prevent multiple refresh calls happening at the same time
+  bool _isRefreshing = false;
+  Future<bool>? _refreshFuture;
+
+  ApiInterceptors({required Dio dio}) : _dio = dio;
 
   InterceptorsWrapper getInterceptor() {
     return InterceptorsWrapper(
+      /// 1. ON REQUEST: Check token and refresh 4 minutes before expiry
       onRequest: (options, handler) async {
-        final prefs = await SharedPreferences.getInstance();
-        final resetToken = prefs.getString('resetToken');
+        final token = await StorageHelper.getAccessToken();
 
-        List<String> ignoreAuthTokenEndpoints = [
-          ApiEndPoints.login,
-          ApiEndPoints.signup,
-          ApiEndPoints.refreshToken,
-        ];
+        if (token != null && token.isNotEmpty) {
+          try {
+            // Check if token is expired OR expires in less than 4 minutes
+            bool isAboutToExpire =
+                JwtDecoder.getRemainingTime(token).inMinutes < 4;
 
-        final resetPasswordEndpoint = ApiEndPoints.resetPassword;
+            if (isAboutToExpire) {
+              debugPrint(
+                "🕒 Token expiring soon (within 4 mins). Refreshing...",
+              );
 
-        debugPrint('➡️ Request Path: ${options.path}');
+              // This waits for the refresh logic to complete safely
+              final success = await _getRefreshLogic();
 
-        Map<String, dynamic> headers;
-        final isIgnored = ignoreAuthTokenEndpoints.any(
-          (e) => options.path.contains(e),
-        );
-        // 1. Use reset token for reset password endpoint
-        if (options.path == resetPasswordEndpoint &&
-            resetToken != null &&
-            resetToken.isNotEmpty) {
-          headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $resetToken',
-          };
-        } else if (isIgnored) {
-          headers = {'Content-Type': 'application/json'};
-        } else {
-          headers = await ApiHeaders.getHeaders();
+              if (success) {
+                final newToken = await StorageHelper.getAccessToken();
+                options.headers['Authorization'] = 'Bearer $newToken';
+              }
+            } else {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
+          } catch (e) {
+            // If token is invalid/malformed, just attach what we have
+            options.headers['Authorization'] = 'Bearer $token';
+          }
         }
-
-        // 2. Merge with existing headers
-        headers.addAll(options.headers);
-        options.headers = headers;
-
         return handler.next(options);
       },
 
+      /// 2. ON RESPONSE: Handle successful data and wrap in ApiResult
       onResponse: (response, handler) async {
         dynamic data = response.data;
         if (data is String) {
           try {
             data = jsonDecode(data);
-          } catch (e) {
-            print('❌ Failed to decode response: $e');
-          }
+          } catch (_) {}
         }
-
-        print('➡️ Response Status: ${response.statusCode}');
-        print('➡️ Response Data: $data');
 
         if (response.statusCode == 200 || response.statusCode == 201) {
-          response.data = ApiResult.success(data: data, status: 200);
-        } else {
-          print("⚠️ in ee option: non-200 response");
-          // handleInvalidToken(response);
-
-          final errorMsg =
-              data['message'] ?? data['detail'] ?? 'Unknown error occurred';
-          print('❌ Error message from server: $errorMsg');
-
-          response.data = ApiResult.failure(
-            error: errorMsg,
+          response.data = ApiResult.success(
+            data: data,
             status: response.statusCode,
           );
+          return handler.next(response);
         }
 
-        return handler.next(response);
+        // If status is not 200/201, reject so onError can handle it
+        return handler.reject(
+          DioException(
+            requestOptions: response.requestOptions,
+            response: response,
+            type: DioExceptionType.badResponse,
+          ),
+        );
       },
 
-      onError: (e, handler) async {
-        final requestOptions = e.requestOptions;
-
-        print("error response:::: ${e.response?.data}");
-
-        // If unauthorized, try refreshing token
-        if (e.response?.statusCode == 401 &&
-            !requestOptions.path.contains(ApiEndPoints.refreshToken)) {
-          print("Hey123");
-          final success = await _refreshAccessToken();
+      /// 3. ON ERROR: Backup logic for 401 Unauthorized errors
+      onError: (error, handler) async {
+        if (error.response?.statusCode == 401 &&
+            !error.requestOptions.path.contains('token/refresh')) {
+          final success = await _getRefreshLogic();
 
           if (success) {
             final newToken = await StorageHelper.getAccessToken();
+            error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
 
-            final opts = Options(
-              method: requestOptions.method,
-              headers: {
-                ...requestOptions.headers,
-                'Authorization': 'Bearer $newToken',
-              },
-            );
-
-            final cloneReq = await _dio!.request(
-              requestOptions.path,
-              data: requestOptions.data,
-              queryParameters: requestOptions.queryParameters,
-              options: opts,
-            );
-
-            return handler.resolve(cloneReq);
-          } else {
-            await StorageHelper.logout(); // Clear data on refresh failure
-            e.response?.data = ApiResult.failure(
-              error: 'Session expired. Please login again.',
-              status: 401,
-            );
+            // Retry the original failed request
+            final retryResponse = await _dio.fetch(error.requestOptions);
+            return handler.resolve(retryResponse);
           }
         }
-
-        e.response?.data = ApiResult.failure(error: e.toString());
-        return handler.next(e);
+        return handler.reject(error);
       },
     );
   }
 
-  /// Calls the refresh token API and saves new tokens
-  Future<bool> _refreshAccessToken() async {
+  /// Thread-safe refresh logic (Synchronizes multiple parallel requests)
+  Future<bool> _getRefreshLogic() async {
+    if (_isRefreshing) {
+      // If a refresh is already in progress, wait for the existing one
+      return _refreshFuture ?? Future.value(false);
+    }
+
+    _isRefreshing = true;
+    _refreshFuture = _refreshToken(); // Start the API call
+
+    final result = await _refreshFuture;
+
+    _isRefreshing = false;
+    _refreshFuture = null;
+    return result ?? false;
+  }
+
+  /// The actual API call to the server
+  Future<bool> _refreshToken() async {
     try {
       final refreshToken = await StorageHelper.getRefreshToken();
       if (refreshToken == null) return false;
 
-      final response = await _dio!.post(
+      // Use a new Dio instance here to avoid interceptor loops
+      final response = await Dio().post(
         ApiEndPoints.refreshToken,
-        data: {"refresh_token": refreshToken},
+        data: {"refresh": refreshToken},
       );
 
-      final result = response.data;
-
-      if (response.statusCode == 200 && result["data"] != null) {
-        final newAccessToken = result["data"]["access_token"];
-        final newRefreshToken = result["data"]["refresh_token"];
-
-        await StorageHelper.saveAccessToken(newAccessToken);
-        await StorageHelper.saveRefreshToken(newRefreshToken);
+      if (response.statusCode == 200) {
+        final newAccess = response.data['access'];
+        await StorageHelper.saveAccessToken(newAccess);
+        debugPrint("✅ Token refreshed successfully.");
         return true;
       }
+      return false;
     } catch (e) {
-      debugPrint("❌ Token refresh failed: $e");
+      debugPrint("❌ Refresh Token failed: $e");
+      await StorageHelper.logout();
+      return false;
     }
-    return false;
   }
-
-  // void handleInvalidToken(Response response) async {
-  //   if (response.statusCode == 401) {
-  //     print("Hey123");
-  //     final success = await _refreshAccessToken();
-  //
-  //     if (success) {
-  //       final newToken = await StorageHelper.getAccessToken();
-  //
-  //       final opts = Options(
-  //         method: response.requestOptions.method,
-  //         headers: {
-  //           ...response.requestOptions.headers,
-  //           'Authorization': 'Bearer $newToken',
-  //         },
-  //       );
-  //
-  //       final cloneReq = await _dio!.request(
-  //         response.requestOptions.path,
-  //         data: response.requestOptions.data,
-  //         queryParameters: response.requestOptions.queryParameters,
-  //         options: opts,
-  //       );
-  //     } else {
-  //       await StorageHelper.logout(); // Clear data on refresh failure
-  //       response.data = ApiResult.failure(
-  //         error: 'Session expired. Please login again.',
-  //         status: 401,
-  //       );
-  //     }
-  //   }
-  // }
 }
